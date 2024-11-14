@@ -26,7 +26,38 @@
 </table>
 
 <script>
+    function fetchPlayers() {
+        $.ajax({
+            url: '/rest/players',
+            method: 'GET',
+            success: function(data) {
+                $('#rpgTable tbody').empty();
 
+                data.forEach((player, index) => {
+                    const row = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${player.name}</td>
+                                <td>${player.title}</td>
+                                <td>${player.race}</td>
+                                <td>${player.profession}</td>
+                                <td>${player.level}</td>
+                                <td>${new Date(player.birthday).toLocaleDateString()}</td>
+                                <td>${player.banned ? 'true' : 'false'}</td>
+                            </tr>
+                        `;
+                    $('#rpgTable tbody').append(row);
+                });
+            },
+            error: function() {
+                alert('Error while receiving data.');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        fetchPlayers();
+    });
 </script>
 
 </body>
