@@ -3,9 +3,30 @@
     <title>RPG</title>
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
+
+    <style>
+        .page-button {
+            margin: 2px;
+            padding: 5px 10px;
+        }
+        .current-page {
+            background-color: lightblue;
+            font-weight: bold;
+        }
+    </style>
+
 </head>
 <body>
 <h1>RPG admin panel</h1>
+
+<!-- Отображение аккаунтов на странице -->
+<label for="itemsPerPage">Show per page:</label>
+<select id="itemsPerPage">
+    <option value="3">3</option>
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+</select>
 
 <table id="rpgTable" border="1">
     <thead>
@@ -25,10 +46,46 @@
     </tbody>
 </table>
 
+<!-- Управление пейджингом -->
+<div id="pagingControls"></div>
+
 <script>
-    function fetchPlayers() {
+    let totalAccounts = 0;
+    let currentPage = 1;
+    let itemsPerPage = 5;
+
+    // Функция для получения общего количества аккаунтов
+    function fetchTotalAccounts() {
         $.ajax({
-            url: '/rest/players',
+            url: '/rest/players/count',
+            method: 'GET',
+            success: function(count) {
+                totalAccounts = count;
+                updatePaginationControls();
+            },
+            error: function() {
+                alert('Error getting total number of accounts.');
+            }
+        });
+    }
+
+    // Функция для обновления кнопок пейджинга
+    function updatePaginationControls() {
+        const totalPages = Math.ceil(totalAccounts / itemsPerPage);
+        const paginationButtons = $('#pagingControls');
+        paginationButtons.empty();
+
+        for (let i = 1; i <= totalPages; i++) {
+            const button = `<button class="page-button ${i === currentPage ? 'current-page' : ''}" onclick="fetchPlayers(${i})">${i}</button>`;
+            paginationButtons.append(button);
+        }
+    }
+
+    // Функция для отправки GET-запроса и добавления данных в таблицу с учетом пейджинга
+    function fetchPlayers(page = 1) {
+        currentPage = page;
+        $.ajax({
+            url: `/rest/players?pageNumber=${page - 1}&pageSize=${itemsPerPage}`,
             method: 'GET',
             success: function(data) {
                 $('#rpgTable tbody').empty();
@@ -36,7 +93,7 @@
                 data.forEach((player, index) => {
                     const row = `
                             <tr>
-                                <td>${index + 1}</td>
+                                <td>${index + 1 + (page - 1) * itemsPerPage}</td>
                                 <td>${player.name}</td>
                                 <td>${player.title}</td>
                                 <td>${player.race}</td>
@@ -48,6 +105,7 @@
                         `;
                     $('#rpgTable tbody').append(row);
                 });
+                updatePaginationControls();
             },
             error: function() {
                 alert('Error while receiving data.');
@@ -55,7 +113,18 @@
         });
     }
 
+    // Обработчик для изменения количества элементов на странице
+    $('#itemsPerPage').on('change', function() {
+        itemsPerPage = parseInt($(this).val(), 10);
+        fetchTotalAccounts();
+        fetchPlayers(1); // Перезагрузка первой страницы
+    });
+
+
+    // Вызов функции для начальной загрузки данных
     $(document).ready(function() {
+        $('#itemsPerPage').val(itemsPerPage);
+        fetchTotalAccounts();
         fetchPlayers();
     });
 </script>
