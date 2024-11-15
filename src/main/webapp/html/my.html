@@ -4,7 +4,58 @@
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
 
+<!--  TODO  script.js-->
+    <script src="/js/script.js" defer></script>
+
     <style>
+        #createAccountForm {
+            width: 300px;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #f0c200; /* Желтая рамка */
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #createAccountForm label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        #createAccountForm input,
+        #createAccountForm select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #f0c200;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        #createAccountForm button {
+            width: 100%;
+            padding: 10px;
+            background-color: #f0c200;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+        }
+
+        #createAccountForm button:hover {
+            background-color: #dca200;
+        }
+
+        #createAccountForm input:focus,
+        #createAccountForm select:focus {
+            border-color: #e59400;
+            outline: none;
+        }
+
         .page-button {
             margin: 2px;
             padding: 5px 10px;
@@ -13,6 +64,13 @@
         .current-page {
             background-color: #ffd300;
             font-weight: bold;
+        }
+
+        .icon-button {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
         }
 
         .icon {
@@ -97,10 +155,173 @@
 
 <div id="pagingControls"></div>
 
+<hr>
+<h2>Create a New Account</h2>
+<form id="createAccountForm">
+    <label for="newName">Name:</label>
+    <input type="text" id="newName" maxlength="12" required><br>
+
+    <label for="newTitle">Title:</label>
+    <input type="text" id="newTitle" maxlength="30" required><br>
+
+    <label for="newRace">Race:</label>
+    <select id="newRace" required>
+    </select><br>
+
+    <label for="newProfession">Profession:</label>
+    <select id="newProfession" required>
+    </select><br>
+
+    <label for="newLevel">Level:</label>
+    <input type="number" id="newLevel" min="0" max="100" required><br>
+
+    <label for="newBirthday">Birthday:</label>
+    <input type="date" id="newBirthday" required><br>
+
+    <label for="newBanned">Banned:</label>
+    <select id="newBanned" required>
+        <option value="false">false</option>
+        <option value="true">true</option>
+    </select><br>
+
+    <button type="button" onclick="createPlayer()">Create Account</button>
+</form>
+
 <script>
     let totalAccounts = 0;
     let currentPage = 1;
     let itemsPerPage = 5;
+
+    //Choose
+    function loadDropdownOptions() {
+        $.ajax({
+            url: '/rest/players/race',
+            method: 'GET',
+            success: function (response) {
+                if (Array.isArray(response)) {
+                    response.forEach(function (race) {
+                        $('#newRace').append('<option value="' + race + '">' + race + '</option>');
+                    });
+                }
+            },
+            error: function () {
+                alert('Error loading races.');
+            }
+        });
+
+        $.ajax({
+            url: '/rest/players/profession',
+            method: 'GET',
+            success: function (response) {
+                if (Array.isArray(response)) {
+                    response.forEach(function (profession) {
+                        $('#newProfession').append('<option value="' + profession + '">' + profession + '</option>');
+                    });
+                }
+            },
+            error: function () {
+                alert('Error loading professions.');
+            }
+        });
+    }
+
+    //CREATE
+    function createPlayer() {
+        const newPlayerData = {
+            name: $('#newName').val(),
+            title: $('#newTitle').val(),
+            race: $('#newRace').val(),
+            profession: $('#newProfession').val(),
+            level: parseInt($('#newLevel').val(), 10),
+            birthday: new Date($('#newBirthday').val()).toISOString(),
+            banned: $('#newBanned').val() === 'false'
+        };
+
+        if (newPlayerData.name.length < 1 || newPlayerData.name.length > 12) {
+            alert('Name must be between 1 and 12 characters.');
+            return;
+        }
+        if (newPlayerData.title.length < 1 || newPlayerData.title.length > 30) {
+            alert('Title must be between 1 and 30 characters.');
+            return;
+        }
+
+        $.ajax({
+            url: '/rest/players',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(newPlayerData),
+            success: function () {
+                alert('New account created successfully.');
+                $('#createAccountForm')[0].reset();
+                fetchTotalAccounts();
+                fetchPlayers(currentPage);
+            },
+            error: function () {
+                alert('Error creating account.' + this.error);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        loadDropdownOptions();
+
+        $('#createButton').on('click', function () {
+            createPlayer();
+        });
+    });
+
+    //EDIT
+    function editPlayer(playerId) {
+        const row = $(`#rpgTable tbody tr`).filter(function () {
+            return $(this).find('td:first').text() == playerId;
+        });
+
+        const editButton = row.find('.edit-button');
+        const isEditing = editButton.data('mode') === 'edit';
+
+        if (isEditing) {
+            editButton.find('img').attr('src', 'https://upload.wikimedia.org/wikipedia/commons/0/04/Save-icon-floppy-disk-transparent-with-circle.png');
+            editButton.data('mode', 'save');
+            row.find('.delete-button').hide();
+
+            row.find('td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(5), td:nth-child(8)').each(function () {
+                const value = $(this).text();
+                $(this).html(`<input type="text" value="${value}">`);
+            });
+
+            const bannedCell = row.find('td:nth-child(8)');
+            const currentValue = bannedCell.text() === 'true';
+            bannedCell.html(`
+            <select>
+                <option value="true" ${currentValue ? 'selected' : ''}>true</option>
+                <option value="false" ${!currentValue ? 'selected' : ''}>false</option>
+            </select>
+        `);
+        } else {
+            const updatedData = {
+                name: row.find('td:nth-child(2) input').val(),
+                title: row.find('td:nth-child(3) input').val(),
+                race: row.find('td:nth-child(4) input').val(),
+                profession: row.find('td:nth-child(5) input').val(),
+                banned: row.find('td:nth-child(8) select').val() === 'true'
+            };
+
+            $.ajax({
+                url: `/rest/players/${playerId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(updatedData),
+                success: function () {
+                    alert('Account updated successfully');
+                    fetchPlayers(currentPage);
+                },
+                error: function () {
+                    alert('Error updating account');
+                }
+            });
+        }
+    }
 
     //DELETE by id
     function deletePlayer(playerId) {
@@ -166,10 +387,14 @@
                                 <td>${new Date(player.birthday).toLocaleDateString()}</td>
                                 <td>${player.banned ? 'true' : 'false'}</td>
                                 <td>
-                                    <img src="https://cdn-icons-png.freepik.com/512/5251/5251816.png" class="icon edit-icon" alt="Edit" onclick="editPlayer(${player.id})" data-mode="edit">
+                                    <button class="icon-button edit-button" onclick="editPlayer(${player.id})" data-mode="edit">
+                                        <img src="https://cdn-icons-png.freepik.com/512/5251/5251816.png" class="icon edit-icon" alt="Edit">
+                                    </button>
                                 </td>
                                 <td>
-                                    <img src="https://cdn-icons-png.freepik.com/512/3807/3807871.png" class="icon delete-icon" alt="Delete" onclick="deletePlayer(${player.id})">
+                                    <button class="icon-button delete-button" onclick="deletePlayer(${player.id})">
+                                        <img src="https://cdn-icons-png.freepik.com/512/3807/3807871.png" class="icon delete-icon" alt="Delete">
+                                    </button>
                                 </td>
                             </tr>
                         `;

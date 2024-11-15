@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -17,6 +18,14 @@ import static java.util.Objects.nonNull;
 @Service
 public class PlayerService {
     private final PlayerRepository playerRepository;
+
+    //my aad
+    public List<Race> getAllRaces() {
+        return Arrays.asList(Race.values());
+    }
+    public List<Profession> getAllProfessions() {
+        return Arrays.asList(Profession.values());
+    }
 
     public PlayerService(@Autowired PlayerRepository playerRepository) {
         this.playerRepository = playerRepository;
