@@ -9,14 +9,56 @@
             margin: 2px;
             padding: 5px 10px;
         }
+
         .current-page {
-            background-color: lightblue;
+            background-color: #ffd300;
             font-weight: bold;
         }
+
         .icon {
             cursor: pointer;
             width: 30px;
             height: 30px;
+        }
+
+        #itemsPerPage {
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+        }
+
+        #rpgTable {
+            width: 100%;
+            margin-bottom: 20px;
+            border: 5px solid #fff;
+            border-top: 5px solid #fff;
+            border-bottom: 3px solid #fff;
+            border-collapse: collapse;
+            outline: 3px solid #ffd300;
+            font-size: 15px;
+            background: #fff !important;
+        }
+
+        #rpgTable th {
+            font-weight: bold;
+            padding: 7px;
+            background: #ffd300;
+            border: none;
+            text-align: left;
+            font-size: 15px;
+            border-top: 3px solid #fff;
+            border-bottom: 3px solid #ffd300;
+        }
+
+        #rpgTable td {
+            padding: 7px;
+            border: none;
+            border-top: 3px solid #fff;
+            border-bottom: 3px solid #fff;
+            font-size: 15px;
+        }
+
+        #rpgTable tbody tr:nth-child(even) {
+            background: #f8f8f8 !important;
         }
     </style>
 
@@ -24,8 +66,7 @@
 <body>
 <h1>RPG admin panel</h1>
 
-<!-- Отображение аккаунтов на странице -->
-<label for="itemsPerPage">Show per page:</label>
+<label for="itemsPerPage">Users per page:</label>
 <select id="itemsPerPage">
     <option value="3">3</option>
     <option value="5">5</option>
@@ -33,7 +74,7 @@
     <option value="20">20</option>
 </select>
 
-<table id="rpgTable" border="1">
+<table id="rpgTable">
     <thead>
     <tr>
         <th>#</th>
@@ -48,12 +89,12 @@
         <th>Delete</th>
     </tr>
     </thead>
-    <tbody>
 
+    <tbody>
+    
     </tbody>
 </table>
 
-<!-- Управление пейджингом -->
 <div id="pagingControls"></div>
 
 <script>
@@ -61,22 +102,38 @@
     let currentPage = 1;
     let itemsPerPage = 5;
 
-    // Функция для получения общего количества аккаунтов
+    //DELETE by id
+    function deletePlayer(playerId) {
+        if (confirm('Are you sure you want to delete account with ID: ' + playerId + '?')) {
+            $.ajax({
+                url: `/rest/players/${playerId}`,
+                method: 'DELETE',
+                success: function() {
+                    alert('Account successfully deleted.');
+                    fetchTotalAccounts();
+                    fetchPlayers(currentPage);
+                },
+                error: function() {
+                    alert('Error deleting account.');
+                }
+            });
+        }
+    }
+
     function fetchTotalAccounts() {
         $.ajax({
             url: '/rest/players/count',
             method: 'GET',
-            success: function(count) {
+            success: function (count) {
                 totalAccounts = count;
                 updatePaginationControls();
             },
-            error: function() {
+            error: function () {
                 alert('Error getting total number of accounts.');
             }
         });
     }
 
-    // Функция для обновления кнопок пейджинга
     function updatePaginationControls() {
         const totalPages = Math.ceil(totalAccounts / itemsPerPage);
         const paginationButtons = $('#pagingControls');
@@ -88,19 +145,19 @@
         }
     }
 
-    // Функция для отправки GET-запроса и добавления данных в таблицу с учетом пейджинга
+    //GET
     function fetchPlayers(page = 1) {
         currentPage = page;
         $.ajax({
             url: `/rest/players?pageNumber=${page - 1}&pageSize=${itemsPerPage}`,
             method: 'GET',
-            success: function(data) {
+            success: function (data) {
                 $('#rpgTable tbody').empty();
 
                 data.forEach((player, index) => {
                     const row = `
                             <tr>
-                                <td>${index + 1 + (page - 1) * itemsPerPage}</td>
+                                <td>${player.id + (page - 1) * itemsPerPage}</td>
                                 <td>${player.name}</td>
                                 <td>${player.title}</td>
                                 <td>${player.race}</td>
@@ -109,10 +166,10 @@
                                 <td>${new Date(player.birthday).toLocaleDateString()}</td>
                                 <td>${player.banned ? 'true' : 'false'}</td>
                                 <td>
-                                    <img src="https://cdn-icons-png.freepik.com/512/5251/5251816.png" class="icon" alt="Edit" onclick="editPlayer(${player.id})">
+                                    <img src="https://cdn-icons-png.freepik.com/512/5251/5251816.png" class="icon edit-icon" alt="Edit" onclick="editPlayer(${player.id})" data-mode="edit">
                                 </td>
                                 <td>
-                                    <img src="https://cdn-icons-png.freepik.com/512/3807/3807871.png" class="icon" alt="Delete" onclick="deletePlayer(${player.id})">
+                                    <img src="https://cdn-icons-png.freepik.com/512/3807/3807871.png" class="icon delete-icon" alt="Delete" onclick="deletePlayer(${player.id})">
                                 </td>
                             </tr>
                         `;
@@ -120,22 +177,20 @@
                 });
                 updatePaginationControls();
             },
-            error: function() {
+            error: function () {
                 alert('Error while receiving data.');
             }
         });
     }
 
-    // Обработчик для изменения количества элементов на странице
-    $('#itemsPerPage').on('change', function() {
+    $('#itemsPerPage').on('change', function () {
         itemsPerPage = parseInt($(this).val(), 10);
         fetchTotalAccounts();
-        fetchPlayers(1); // Перезагрузка первой страницы
+        fetchPlayers(1);
     });
 
 
-    // Вызов функции для начальной загрузки данных
-    $(document).ready(function() {
+    $(document).ready(function () {
         $('#itemsPerPage').val(itemsPerPage);
         fetchTotalAccounts();
         fetchPlayers();
