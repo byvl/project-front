@@ -233,7 +233,7 @@
             race: $('#newRace').val(),
             profession: $('#newProfession').val(),
             level: parseInt($('#newLevel').val(), 10),
-            birthday: new Date($('#newBirthday').val()).toISOString(),
+            birthday: new Date($('#newBirthday').val()).getTime(),
             banned: $('#newBanned').val() === 'false'
         };
 
