@@ -3,10 +3,6 @@
     <title>RPG</title>
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
-
-<!--  TODO  script.js-->
-    <script src="/js/script.js" defer></script>
-
 </head>
 <body>
 <h1>RPG admin panel</h1>
@@ -36,7 +32,7 @@
     </thead>
 
     <tbody>
-    
+
     </tbody>
 </table>
 
@@ -238,7 +234,7 @@
                 contentType: 'application/json',
                 data: JSON.stringify(updatedData),
                 success: function () {
-                    alert('Account updated successfully');
+                    // alert('Account updated successfully');
                     fetchPlayers(currentPage);
                 },
                 error: function () {
@@ -255,7 +251,7 @@
                 url: `/rest/players/${playerId}`,
                 method: 'DELETE',
                 success: function() {
-                    alert('Account successfully deleted.');
+                    // alert('Account successfully deleted.');
                     fetchTotalAccounts();
                     fetchPlayers(currentPage);
                 },
