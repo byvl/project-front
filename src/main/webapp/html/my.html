@@ -285,15 +285,12 @@
             editButton.data('mode', 'save');
             row.find('.delete-button').hide();
 
-            // Поля, которые нужно редактировать
             const raceCell = row.find('td:nth-child(4)');
             const professionCell = row.find('td:nth-child(5)');
 
-            // Заменяем ячейки выпадающими списками
             raceCell.html('<select class="edit-race"></select>');
             professionCell.html('<select class="edit-profession"></select>');
 
-            // Загружаем опции для выпадающих списков
             $.ajax({
                 url: '/rest/players/race',
                 method: 'GET',
@@ -302,7 +299,6 @@
                         response.forEach(function (race) {
                             raceCell.find('.edit-race').append('<option value="' + race + '">' + race + '</option>');
                         });
-                        // Устанавливаем текущее значение
                         raceCell.find('.edit-race').val(raceCell.data('current-value'));
                     }
                 },
@@ -319,7 +315,6 @@
                         response.forEach(function (profession) {
                             professionCell.find('.edit-profession').append('<option value="' + profession + '">' + profession + '</option>');
                         });
-                        // Устанавливаем текущее значение
                         professionCell.find('.edit-profession').val(professionCell.data('current-value'));
                     }
                 },
@@ -328,7 +323,6 @@
                 }
             });
 
-            // Другие поля редактирования
             row.find('td:nth-child(2), td:nth-child(3), td:nth-child(8)').each(function () {
                 const value = $(this).text();
                 $(this).html(`<input type="text" value="${value}">`);
