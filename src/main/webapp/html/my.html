@@ -169,7 +169,12 @@
             row.find('.delete-button').hide();
 
             const raceCell = row.find('td:nth-child(4)');
+            const currentRace = raceCell.text();
+            raceCell.data('current-value', currentRace);
+
             const professionCell = row.find('td:nth-child(5)');
+            const currentProfession = professionCell.text();
+            professionCell.data('current-value', currentProfession);
 
             raceCell.html('<select class="edit-race"></select>');
             professionCell.html('<select class="edit-profession"></select>');
@@ -180,9 +185,9 @@
                 success: function (response) {
                     if (Array.isArray(response)) {
                         response.forEach(function (race) {
-                            raceCell.find('.edit-race').append('<option value="' + race + '">' + race + '</option>');
+                            const selected = race === currentRace ? 'selected' : '';
+                            raceCell.find('.edit-race').append('<option value="' + race + '" ' + selected + '>' + race + '</option>');
                         });
-                        raceCell.find('.edit-race').val(raceCell.data('current-value'));
                     }
                 },
                 error: function () {
@@ -196,9 +201,9 @@
                 success: function (response) {
                     if (Array.isArray(response)) {
                         response.forEach(function (profession) {
-                            professionCell.find('.edit-profession').append('<option value="' + profession + '">' + profession + '</option>');
+                            const selected = profession === currentProfession ? 'selected' : '';
+                            professionCell.find('.edit-profession').append('<option value="' + profession + '" ' + selected + '>' + profession + '</option>');
                         });
-                        professionCell.find('.edit-profession').val(professionCell.data('current-value'));
                     }
                 },
                 error: function () {
@@ -223,8 +228,8 @@
             const updatedData = {
                 name: row.find('td:nth-child(2) input').val(),
                 title: row.find('td:nth-child(3) input').val(),
-                race: row.find('td:nth-child(4) input').val(),
-                profession: row.find('td:nth-child(5) input').val(),
+                race: row.find('.edit-race').val(),
+                profession: row.find('.edit-profession').val(),
                 banned: row.find('td:nth-child(8) select').val() === 'true'
             };
 
